@@ -126,7 +126,13 @@ public class Parser {
                 return n;
             }
 
-        } else if (lookUpNextType() == Token.TokenType.Number) {
+        } else if (lookUpNextType() == Token.TokenType.String) {
+            String content = readNext(Token.TokenType.String);
+            StringNode strNode = new StringNode();
+            strNode.content = content;
+            return strNode;
+        }
+        else if (lookUpNextType() == Token.TokenType.Number) {
 
             ExpressionNode n = new NumberNode(
                     Float.parseFloat(readNext(Token.TokenType.Number)), ptr);

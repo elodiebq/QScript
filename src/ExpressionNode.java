@@ -17,6 +17,14 @@ class NumberNode extends ExpressionNode {
     }
 }
 
+class StringNode extends ExpressionNode {
+
+    String content;
+    void compile(CodeWriter cw) throws SyntaxErrorException {
+        cw.writeInstruction("pushstr", content);      
+    }
+    
+}
 class BinaryNode extends ExpressionNode {
     Operator opt;
     ExpressionNode left, right;

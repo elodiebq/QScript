@@ -1,3 +1,4 @@
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -6,6 +7,8 @@ public class Lexer {
         ArrayList<Token> rt = new ArrayList<Token>();
         String tmp = "";
         int state = 0, ptr = 0;
+        int length = input.length();
+       // System.out.print("LENGTH: "+length);
         while (ptr < input.length()) {
             char curChar = input.charAt(ptr);
             char nextChar = '\0';
@@ -14,7 +17,7 @@ public class Lexer {
             if (state == 0) {
                 if (Character.isDigit(curChar)) {
                     state = 1;
-                } else if (curChar == ' ') {
+                } else if (curChar == ' ' || curChar == '\n' || curChar == '\t' || curChar == '\r') {
                     ptr++;
                 } else if (curChar == '+' || curChar == '-' || curChar == '*'
                         || curChar == '/' || curChar == '(' || curChar == ')'
@@ -25,13 +28,21 @@ public class Lexer {
                     state = 2;
                 } else if (Character.isAlphabetic(curChar) || curChar == '_') {
                     state = 3;
-                } else {
+                } else if (curChar == '"') {
+                    ptr++;
+                    state = 7;
+                }
+                else {
                     throw new SyntaxErrorException(rt.size() - 1);
                 }
             } else if (state == 1) {
                 if (Character.isDigit(curChar)) {
                     tmp += curChar;
                     ptr++;
+                } else if (curChar == '.') {
+                    tmp += curChar;
+                    ptr++;
+                    state = 4;
                 } else {
                     rt.add(new Token(tmp, Token.TokenType.Number, ptr));
                     tmp = "";
@@ -116,7 +127,7 @@ public class Lexer {
                 }
                 ptr++;
                 state = 0;
-            } else {
+            } else if(state == 3){
                 if (Character.isAlphabetic(curChar) || curChar == '_'
                         || Character.isDigit(curChar)) {
 
@@ -130,6 +141,60 @@ public class Lexer {
                     state = 0;
                 }
 
+            } else if (state == 4){
+                if(Character.isDigit(curChar)) {
+                    tmp += curChar;
+                    ptr++;
+                } else if (curChar == 'e') {
+                    tmp += curChar;
+                    ptr++;
+                    state = 5;
+                } else {
+                    Token t = new Token(tmp,Token.TokenType.Number,ptr);
+                    rt.add(t);
+                    tmp = "";
+                    state = 0;
+                }
+            } else if (state == 5) {
+                if ((curChar == '-' || Character.isDigit(curChar)) && nextChar != '-') {
+                    tmp += curChar;
+                    ptr++;
+                    state = 6;
+                } else {
+                    throw new SyntaxErrorException(ptr);
+                }
+            } else if (state == 6) {
+                if (Character.isDigit(curChar)) {
+                    tmp += curChar;
+                    ptr++;
+                } else {
+                    Token t = new Token(tmp, Token.TokenType.Number, ptr);
+                    rt.add(t);
+                    tmp = "";
+                    state = 0;
+                }
+            } else if (state == 7) {
+                if (curChar == '\\'&& (nextChar == 'n' || nextChar == 'r' || nextChar == 's' || nextChar == 't')) {
+                    ptr++;
+                    state = 8;
+                } else if (curChar == '"') {
+                    Token t = new Token(tmp, Token.TokenType.String, ptr);
+                    rt.add(t);
+                    tmp = "";
+                    ptr++;
+                    state = 0;
+                } else {
+                    tmp += curChar;
+                    ptr++;
+                }
+            } else if (state == 8) {
+                if (curChar == 'n') tmp = tmp + '\n';
+                else if (curChar == 'r') tmp = tmp + '\r';
+                else if (curChar == 's') tmp = tmp + " ";
+                else if (curChar == 't') tmp = tmp + '\t';
+                else tmp += '\\' + curChar;
+                ptr++;
+                state = 7;
             }
         }
         if (state == 1) {
@@ -141,31 +206,58 @@ public class Lexer {
         return rt;
     }
 
+    public static String readAllText(String fileName)
+    {
+        BufferedReader br = null;
+        try {
+            br = new BufferedReader(new FileReader(fileName));
+            try {
+                StringBuilder sb = new StringBuilder();
+                String line = br.readLine();
+                while (line != null) {
+                    sb.append(line);
+                    sb.append(System.lineSeparator());
+                    line = br.readLine();
+                }
+                String everything = sb.toString();
+                br.close();
+                return everything;
+            }
+            catch (IOException e)
+            {
+               br.close();
+               throw e;
+            }
+        }        
+        catch(IOException e)
+        {
+            return "";
+        }
+    }
     public static void main(String[] args) {
         Lexer testLexer = new Lexer();
         Parser parser = new Parser();
+        
         VirtualMachine vm = new VirtualMachine();
         try {
-            String input = "x = 0;sum = 0; do {if(x%2 == 0) {sum = sum + x; x = x + 1; continue;} x = x + 1;}while(x < 10);";
+            String input = readAllText(args[0]);
             List<Token> tokens = testLexer.Parse(input);
             ProgramNode syntaxTree = parser.parseProgram(tokens);
             CodeWriter cw = new CodeWriter();
             syntaxTree.compile(cw);
+            
+            vm.execute(cw.getCode());
+            System.out.println("\n\n======debug info======");
             int i = 0;
             for (Instruction ist : cw.getCode().instructionList) {
                 System.out.println(i + ": " + ist.instructName + " "
                         + ist.argument);
                 i++;
             }
-
-            vm.execute(cw.getCode());
-            // System.out.print(parser.parseProgram(tokens).children.get(0).varName.toString());
-             for (Token t : tokens) {
-             System.out.println(t.content);
-             }
         } catch (SyntaxErrorException e) {
             System.out.println("syntax error at " + Integer.toString(e.pos));
-        } catch (RuntimeException e) {
+        } 
+        catch (RuntimeException e) {
             System.out.println("Runtime error: " + e.description);
         }
     }

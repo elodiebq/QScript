@@ -10,6 +10,6 @@ public class Token {
     }
 
     public enum TokenType {
-        Number, Add, Sub, Mul, Div, Mod, LBrace, RBrace, LParent, RParent, Assign, Semicolon, CompareEqual, GreaterEqual, LessEqual, NotEqual, Greater, Less, BitAnd, BitOr, BitXor, And, Or, Not, Identifier, EndofFile
+        Number, String, Add, Sub, Mul, Div, Mod, LBrace, RBrace, LParent, RParent, Assign, Semicolon, CompareEqual, GreaterEqual, LessEqual, NotEqual, Greater, Less, BitAnd, BitOr, BitXor, And, Or, Not, Identifier, EndofFile
     }
 }
