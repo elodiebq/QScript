@@ -165,7 +165,7 @@ public class Parser {
             Token.TokenType tp = lookUpNextType();
             nn.opt = tokenTypeToOperator(tp);
             readNext(tp);
-            nn.right = parseExpression(level - 1);
+            nn.right = parseExpression(level);
             return nn;
         } else {
             while (ptr < tokens.size()
