@@ -245,7 +245,10 @@ public class Lexer {
             ProgramNode syntaxTree = parser.parseProgram(tokens);
             CodeWriter cw = new CodeWriter();
             syntaxTree.compile(cw);
-            
+            Code c = cw.getCode();
+            for (Instruction i : c.instructionList) {
+                System.out.println(i.instructName + " " + i.argument);
+            }
             vm.execute(cw.getCode());
             System.out.println("\n\n======debug info======");
             int i = 0;

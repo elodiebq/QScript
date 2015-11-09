@@ -353,8 +353,10 @@ public class VirtualMachine {
                 }
             } else if (instr.instructName.equals("store")) {
                 heap.put(instr.argument, stack.get(stack.size() - 1));
+            } else if (instr.instructName.equals("pop")) {
                 stack.remove(stack.size() - 1);
-            } else if (instr.instructName.equals("jf")) {
+            }
+            else if (instr.instructName.equals("jf")) {
                 RuntimeObject topObj = stack.get(stack.size() - 1);
                 if (topObj.type == RuntimeObject.ContentType.Float) {
                     float top = topObj.FloatValue;

@@ -18,6 +18,15 @@ class AssignmentStmtNode extends StmtNode {
     
 }
 
+class ExpressionStmtNode extends StmtNode {
+    ExpressionNode value;
+    
+    void compile(CodeWriter cw) throws SyntaxErrorException {
+        this.value.compile(cw);
+        cw.writeInstruction("pop");
+    }
+}
+
 class IfStmtNode extends StmtNode {
     ExpressionNode condition;
     StmtNode tureStmt;

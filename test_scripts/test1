@@ -1,6 +1,2 @@
-for(x=1 to 9) {
-	for(y=1 to x) {
-		z = print(str(y)+"*"+str(x) + "=" + str(y*x) + " ");
-	}
-	z = print("\n");
-}
+a = 2;
+print(a);

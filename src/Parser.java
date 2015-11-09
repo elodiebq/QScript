@@ -24,6 +24,7 @@ public class Parser {
         priorityTable.put(Token.TokenType.BitXor, 5);
         priorityTable.put(Token.TokenType.And, 6);
         priorityTable.put(Token.TokenType.Or, 7);
+        priorityTable.put(Token.TokenType.Assign, 8);
     }
 
     private Token.TokenType lookUpNextType() {
@@ -96,6 +97,8 @@ public class Parser {
             return BinaryNode.Operator.Or;
         case Mod:
             return BinaryNode.Operator.Mod;
+        case Assign:
+            return BinaryNode.Operator.Assign;
         default:
             throw new SyntaxErrorException(0);
         }
@@ -131,8 +134,7 @@ public class Parser {
             StringNode strNode = new StringNode();
             strNode.content = content;
             return strNode;
-        }
-        else if (lookUpNextType() == Token.TokenType.Number) {
+        } else if (lookUpNextType() == Token.TokenType.Number) {
 
             ExpressionNode n = new NumberNode(
                     Float.parseFloat(readNext(Token.TokenType.Number)), ptr);
@@ -148,7 +150,7 @@ public class Parser {
     }
 
     public ExpressionNode parseExpression() throws SyntaxErrorException {
-        return parseExpression(7);
+        return parseExpression(8);
     }
 
     public ExpressionNode parseExpression(int level)
@@ -157,27 +159,34 @@ public class Parser {
             return parseExpress0();
         }
         ExpressionNode n0 = parseExpression(level - 1);
-        while (ptr < tokens.size()
-                && priorityTable.containsKey(lookUpNextType())
-                && priorityTable.get(lookUpNextType()) == level) {
+        if (lookUpNextType() == Token.TokenType.Assign) {
+            BinaryNode nn = new BinaryNode();
+            nn.left = n0;
             Token.TokenType tp = lookUpNextType();
+            nn.opt = tokenTypeToOperator(tp);
             readNext(tp);
-            ExpressionNode n1 = parseExpression(level - 1);
-            ExpressionNode nn;
-            nn = new BinaryNode(tokenTypeToOperator(tp), n0, n1, ptr);
-            n0 = nn;
+            nn.right = parseExpression(level - 1);
+            return nn;
+        } else {
+            while (ptr < tokens.size()
+                    && priorityTable.containsKey(lookUpNextType())
+                    && priorityTable.get(lookUpNextType()) == level) {
+                Token.TokenType tp = lookUpNextType();
+                readNext(tp);
+                ExpressionNode n1 = parseExpression(level - 1);
+                ExpressionNode nn;
+                nn = new BinaryNode(tokenTypeToOperator(tp), n0, n1, ptr);
+                n0 = nn;
 
+            }
+            return n0;
         }
-        return n0;
     }
 
-    public AssignmentStmtNode parseExpressStat() throws SyntaxErrorException {
-        String varName = readNext(Token.TokenType.Identifier);
-        readNext(Token.TokenType.Assign);
+    public ExpressionStmtNode parseExpressStmt() throws SyntaxErrorException {
         ExpressionNode n = parseExpression();
         readNext(Token.TokenType.Semicolon);
-        AssignmentStmtNode nn = new AssignmentStmtNode();
-        nn.varName = varName;
+        ExpressionStmtNode nn = new ExpressionStmtNode();
         nn.value = n;
         return nn;
     }
@@ -195,6 +204,7 @@ public class Parser {
         }
         return ifNode;
     }
+
     public WhileStmtNode parseWhileStmt() throws SyntaxErrorException {
         WhileStmtNode whileNode = new WhileStmtNode();
         readNext("while");
@@ -204,7 +214,7 @@ public class Parser {
         whileNode.stmt = parseStmt();
         return whileNode;
     }
-    
+
     public DoWhileNode parseDoWhileStmt() throws SyntaxErrorException {
         DoWhileNode doWhileNode = new DoWhileNode();
         readNext("do");
@@ -241,13 +251,13 @@ public class Parser {
         return bn;
 
     }
-    
+
     public BreakStmtNode parseBreakStmt() throws SyntaxErrorException {
         readNext("break");
         readNext(";");
         return new BreakStmtNode();
     }
-    
+
     public ContinueStmtNode parseContinueStmt() throws SyntaxErrorException {
         readNext("continue");
         readNext(";");
@@ -270,7 +280,7 @@ public class Parser {
         } else if (lookUpNextContent().equals("do")) {
             return parseDoWhileStmt();
         } else
-            return parseExpressStat();
+            return parseExpressStmt();
     }
 
     public ProgramNode parseProgram(List<Token> tokens)

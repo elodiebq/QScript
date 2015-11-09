@@ -32,7 +32,7 @@ class BinaryNode extends ExpressionNode {
     public enum Operator {
         Add, Sub, Mul, Div,
         CompareEqual, GreaterEqual, LessEqual, NotEqual, Greater, Less,
-        BitAnd, BitOr, BitXor, And, Or, Mod
+        BitAnd, BitOr, BitXor, And, Or, Mod, Assign
     }
 
     public BinaryNode() {
@@ -51,56 +51,93 @@ class BinaryNode extends ExpressionNode {
     }
 
     void compile(CodeWriter cw) throws SyntaxErrorException {
-        this.left.compile(cw);
-        this.right.compile(cw);
+        
         switch (this.opt) {
         case Add:
+            this.left.compile(cw);
+            this.right.compile(cw);
             cw.writeInstruction("add");
             break;
         case Sub:
+            this.left.compile(cw);
+            this.right.compile(cw);
             cw.writeInstruction("sub");
             break;
         case Mul:
+            this.left.compile(cw);
+            this.right.compile(cw);
             cw.writeInstruction("mul");
             break;
         case Div:
+            this.left.compile(cw);
+            this.right.compile(cw);
             cw.writeInstruction("div");
             break;
         case And:
+            this.left.compile(cw);
+            this.right.compile(cw);
             cw.writeInstruction("and");
             break;
         case BitAnd:
+            this.left.compile(cw);
+            this.right.compile(cw);
             cw.writeInstruction("band");
             break;
         case BitOr:
+            this.left.compile(cw);
+            this.right.compile(cw);
             cw.writeInstruction("bor");
             break;
         case BitXor:
+            this.left.compile(cw);
+            this.right.compile(cw);
             cw.writeInstruction("bxor");
             break;
         case CompareEqual:
+            this.left.compile(cw);
+            this.right.compile(cw);
             cw.writeInstruction("eql");
             break;
         case Greater:
+            this.left.compile(cw);
+            this.right.compile(cw);
             cw.writeInstruction("gt");
             break;
         case GreaterEqual:
+            this.left.compile(cw);
+            this.right.compile(cw);
             cw.writeInstruction("ge");
             break;
         case Less:
+            this.left.compile(cw);
+            this.right.compile(cw);
             cw.writeInstruction("lt");
             break;
         case LessEqual:
+            this.left.compile(cw);
+            this.right.compile(cw);
             cw.writeInstruction("le");
             break;
         case NotEqual:
+            this.left.compile(cw);
+            this.right.compile(cw);
             cw.writeInstruction("neq");
             break;
         case Or:
+            this.left.compile(cw);
+            this.right.compile(cw);
             cw.writeInstruction("or");
             break;
         case Mod:
+            this.left.compile(cw);
+            this.right.compile(cw);
             cw.writeInstruction("mod");
+            break;
+        case Assign:
+            this.right.compile(cw);
+            VariableNode vn = (VariableNode) this.left; 
+            if (vn == null) throw new SyntaxErrorException(0);
+            cw.writeInstruction("store", vn.varName);
             break;
         default:
             break;
