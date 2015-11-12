@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -105,16 +106,36 @@ public class Parser {
 
     }
 
+    public ArrayExpressionNode parseArrayExpr() throws SyntaxErrorException {
+        ArrayExpressionNode arrNode = new ArrayExpressionNode();
+     
+        readNext(Token.TokenType.LBracket);
+        while (lookUpNextType() != Token.TokenType.RBracket) {
+            ExpressionNode n = parseExpression();
+            arrNode.elements.add(n);
+            if (lookUpNextType() != Token.TokenType.Comma) {
+                break;
+            }
+            readNext(Token.TokenType.Comma);
+            
+        }
+        readNext(Token.TokenType.RBracket);
+        return arrNode;
+    }
+    
     public ExpressionNode parseExpress0() throws SyntaxErrorException {
         if (ptr >= tokens.size()) {
             throw new SyntaxErrorException(0);
         }
-        if (lookUpNextType() == Token.TokenType.Sub) {
+        ExpressionNode n0 = null;
+        if (lookUpNextType() == Token.TokenType.LBracket) {
+            n0 = parseArrayExpr();
+        } else if (lookUpNextType() == Token.TokenType.Sub) {
             UnaryNode n = new UnaryNode();
             readNext(Token.TokenType.Sub);
             n.node = parseExpress0();
 
-            return n;
+            n0 = n;
         } else if (tokens.get(ptr).type == Token.TokenType.Identifier) {
             String functionName = readNext(Token.TokenType.Identifier);
             if (lookUpNextType() == Token.TokenType.LParent) {
@@ -122,31 +143,41 @@ public class Parser {
                 ExpressionNode argVal = parseExpression();
                 ExpressionNode n = new InovocationNode(functionName, argVal);
                 readNext(Token.TokenType.RParent);
-                return n;
+                n0 = n;
             } else {
                 VariableNode n = new VariableNode();
                 n.varName = functionName;
-                return n;
+                n0 = n;
             }
 
         } else if (lookUpNextType() == Token.TokenType.String) {
             String content = readNext(Token.TokenType.String);
             StringNode strNode = new StringNode();
             strNode.content = content;
-            return strNode;
+            n0 = strNode;
         } else if (lookUpNextType() == Token.TokenType.Number) {
 
             ExpressionNode n = new NumberNode(
                     Float.parseFloat(readNext(Token.TokenType.Number)), ptr);
-            return n;
+            n0 = n;
         } else if (lookUpNextType() == Token.TokenType.LParent) {
 
             readNext(Token.TokenType.LParent);
             ExpressionNode n = parseExpression();
             readNext(Token.TokenType.RParent);
-            return n;
+            n0 = n;
         }
-        return null;
+        while (lookUpNextType() == Token.TokenType.LBracket) {
+            IndexExpressionNode idxNode = new IndexExpressionNode();
+            readNext(Token.TokenType.LBracket);
+            ExpressionNode index = parseExpression();
+            readNext(Token.TokenType.RBracket);
+            idxNode.object = n0;
+            idxNode.index = index;
+            n0 = idxNode;
+        }
+        return n0;
+       
     }
 
     public ExpressionNode parseExpression() throws SyntaxErrorException {

@@ -7,16 +7,7 @@ abstract public class Node {
 abstract class StmtNode extends Node{
     
 }
-class AssignmentStmtNode extends StmtNode {
-    String varName;
-    ExpressionNode value;
-    
-    void compile(CodeWriter cw) throws SyntaxErrorException {
-        this.value.compile(cw);
-        cw.writeInstruction("store", varName);
-    }
-    
-}
+
 
 class ExpressionStmtNode extends StmtNode {
     ExpressionNode value;

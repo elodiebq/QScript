@@ -20,6 +20,38 @@ public class VirtualMachine {
                 ro.StringValue = instr.argument;
                 ro.type = RuntimeObject.ContentType.String;
                 stack.add(ro);
+            } else if (instr.instructName.equals("loadIdx")) {
+                RuntimeObject idxObj = stack.get(stack.size() - 1);
+                if (idxObj.type != RuntimeObject.ContentType.Float) {
+                    throw new RuntimeException("float index expected");
+                }
+                int idx = (int) idxObj.FloatValue;
+                
+                RuntimeObject arrObj = stack.get(stack.size() - 2);
+                if (arrObj.type != RuntimeObject.ContentType.Array) {
+                    throw new RuntimeException("array expected");
+                }
+                if (idx >= arrObj.ArrayValue.size() || idx < 0) {
+                    throw new RuntimeException("Index out of bound");
+                }
+                RuntimeObject ro = arrObj.ArrayValue.get(idx);
+                stack.remove(stack.size() - 1);
+                stack.remove(stack.size() - 1);
+                stack.add(ro);
+
+            } else if (instr.instructName.equals("createArr")) {
+                RuntimeObject ro = new RuntimeObject();
+
+                ArrayList<RuntimeObject> arr = new ArrayList<RuntimeObject>();
+                int count = Integer.parseInt(instr.argument);
+                for (int i = 0; i < count; i++) {
+                    RuntimeObject toAdd = stack.get(stack.size() - 1);
+                    arr.add(toAdd);
+                    stack.remove(stack.size() - 1);
+                }
+                ro.ArrayValue = arr;
+                ro.type = RuntimeObject.ContentType.Array;
+                stack.add(ro);
             } else if (instr.instructName.equals("neg")) {
 
                 if (stack.get(stack.size() - 1).type == RuntimeObject.ContentType.Float) {
@@ -272,7 +304,7 @@ public class VirtualMachine {
                     stack.remove(stack.size() - 1);
                     stack.add(obj);
                     System.out.print(argObj.toString());
-                }  else if (functionName.equals("println")) {
+                } else if (functionName.equals("println")) {
                     RuntimeObject argObj = stack.get(stack.size() - 1);
                     RuntimeObject obj = new RuntimeObject();
                     obj.type = RuntimeObject.ContentType.Float;
@@ -288,8 +320,8 @@ public class VirtualMachine {
                         obj.StringValue = Float.toString(argObj.FloatValue);
                         stack.remove(stack.size() - 1);
                         stack.add(obj);
-                    } else if (argObj.type == RuntimeObject.ContentType.String){
-                        
+                    } else if (argObj.type == RuntimeObject.ContentType.String) {
+
                     } else {
                         throw new RuntimeException("type mismatch");
                     }
@@ -301,8 +333,8 @@ public class VirtualMachine {
                         obj.FloatValue = Float.parseFloat(argObj.StringValue);
                         stack.remove(stack.size() - 1);
                         stack.add(obj);
-                    } else if (argObj.type == RuntimeObject.ContentType.Float){
-                        
+                    } else if (argObj.type == RuntimeObject.ContentType.Float) {
+
                     } else {
                         throw new RuntimeException("type mismatch");
                     }
@@ -353,10 +385,25 @@ public class VirtualMachine {
                 }
             } else if (instr.instructName.equals("store")) {
                 heap.put(instr.argument, stack.get(stack.size() - 1));
+            } else if (instr.instructName.equals("storeIdx")) {
+                RuntimeObject value = stack.get(stack.size() - 3);
+                RuntimeObject idx = stack.get(stack.size() - 2);
+                RuntimeObject arr = stack.get(stack.size() - 1);
+                if (arr.type != RuntimeObject.ContentType.Array) {
+                    throw new RuntimeException("Sntax error");
+                }
+                if (idx.type != RuntimeObject.ContentType.Float) {
+                    throw new RuntimeException("Index should be a number");
+                }
+                if (idx.FloatValue < 0 || idx.FloatValue > arr.ArrayValue.size() - 1) {
+                    throw new RuntimeException("Index out of bound");
+                }
+                arr.ArrayValue.set((int)idx.FloatValue, value);
+                stack.remove(stack.size() - 1);
+                stack.remove(stack.size() - 1);
             } else if (instr.instructName.equals("pop")) {
                 stack.remove(stack.size() - 1);
-            }
-            else if (instr.instructName.equals("jf")) {
+            } else if (instr.instructName.equals("jf")) {
                 RuntimeObject topObj = stack.get(stack.size() - 1);
                 if (topObj.type == RuntimeObject.ContentType.Float) {
                     float top = topObj.FloatValue;
@@ -385,29 +432,41 @@ public class VirtualMachine {
             }
             programCounter++;
         }
-   
-//        for (Map.Entry<String, RuntimeObject> map : heap.entrySet()) {
-//            System.out.println(map.getKey() + "= "
-//                    + map.getValue().toString());
-//        }
-   
+
+        // for (Map.Entry<String, RuntimeObject> map : heap.entrySet()) {
+        // System.out.println(map.getKey() + "= "
+        // + map.getValue().toString());
+        // }
+
     }
 }
 
 class RuntimeObject {
     String StringValue;
     float FloatValue;
+    ArrayList<RuntimeObject> ArrayValue;
     ContentType type;
 
     public String toString() {
         if (type == ContentType.String) {
             return this.StringValue;
+        } else if (type == ContentType.Array) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("[");
+            for (RuntimeObject ro : ArrayValue) {
+                sb.append(ro.toString());
+                if (ro != ArrayValue.get(ArrayValue.size() - 1)) {
+                    sb.append(", ");
+                }
+            }
+            sb.append("]");
+            return sb.toString();
         } else {
             return Float.toString(this.FloatValue);
         }
     }
 
     enum ContentType {
-        String, Float,
+        String, Float, Array
     }
 }

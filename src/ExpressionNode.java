@@ -1,9 +1,32 @@
+import java.util.ArrayList;
+
 abstract public class ExpressionNode extends Node {
 
     int pos;
 
 }
+class ArrayExpressionNode extends ExpressionNode {
+    ArrayList<ExpressionNode> elements = new ArrayList<ExpressionNode>();
+    
+    void compile(CodeWriter cw) throws SyntaxErrorException {
+        
+        for (int i = elements.size() - 1; i >= 0; i--) {
+            elements.get(i).compile(cw);
+        }
+        cw.writeInstruction("createArr", Integer.toString(elements.size()));
+    }
+}
 
+class IndexExpressionNode extends ExpressionNode {
+    ExpressionNode object;
+    ExpressionNode index;
+    
+    void compile(CodeWriter cw) throws SyntaxErrorException {
+        object.compile(cw);
+        index.compile(cw);
+        cw.writeInstruction("loadIdx");
+    }
+}
 class NumberNode extends ExpressionNode {
     float value;
 
@@ -32,7 +55,7 @@ class BinaryNode extends ExpressionNode {
     public enum Operator {
         Add, Sub, Mul, Div,
         CompareEqual, GreaterEqual, LessEqual, NotEqual, Greater, Less,
-        BitAnd, BitOr, BitXor, And, Or, Mod, Assign
+        BitAnd, BitOr, BitXor, And, Or, Mod, Assign, Bracket
     }
 
     public BinaryNode() {
@@ -132,12 +155,24 @@ class BinaryNode extends ExpressionNode {
             this.left.compile(cw);
             this.right.compile(cw);
             cw.writeInstruction("mod");
-            break;
-        case Assign:
-            this.right.compile(cw);
-            VariableNode vn = (VariableNode) this.left; 
-            if (vn == null) throw new SyntaxErrorException(0);
-            cw.writeInstruction("store", vn.varName);
+            break;  
+        case Assign: 
+            ExpressionNode en = this.left;
+            if (en instanceof VariableNode) {
+                this.right.compile(cw);
+                VariableNode vn = (VariableNode) this.left; 
+                cw.writeInstruction("store", vn.varName);
+            } else if (en instanceof IndexExpressionNode) {
+                IndexExpressionNode idxn = (IndexExpressionNode) this.left;
+                this.right.compile(cw);
+                idxn.index.compile(cw);
+                idxn.object.compile(cw);
+                
+                
+                cw.writeInstruction("storeIdx");
+            } else {
+                throw new SyntaxErrorException(0);    
+            }
             break;
         default:
             break;

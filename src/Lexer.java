@@ -24,7 +24,8 @@ public class Lexer {
                         || curChar == '=' || curChar == ';' || curChar == '!'
                         || curChar == '{' || curChar == '}' || curChar == '>'
                         || curChar == '<' || curChar == '&' || curChar == '|'
-                        || curChar == '^' || curChar == '%') {
+                        || curChar == '^' || curChar == '%'|| curChar == '['
+                        || curChar == ']' || curChar == ',') {
                     state = 2;
                 } else if (Character.isAlphabetic(curChar) || curChar == '_') {
                     state = 3;
@@ -122,6 +123,12 @@ public class Lexer {
                     rt.add(new Token(curChar + "", Token.TokenType.LBrace, ptr));
                 } else if (curChar == '}') {
                     rt.add(new Token(curChar + "", Token.TokenType.RBrace, ptr));
+                } else if (curChar == '[') {
+                    rt.add(new Token(curChar + "", Token.TokenType.LBracket, ptr));
+                } else if (curChar == ']') {
+                    rt.add(new Token(curChar + "", Token.TokenType.RBracket, ptr));
+                } else if (curChar == ',') {
+                    rt.add(new Token(curChar + "", Token.TokenType.Comma, ptr));
                 } else {
                     throw new SyntaxErrorException(rt.size() - 1);
                 }
