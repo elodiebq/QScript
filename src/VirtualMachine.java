@@ -286,17 +286,27 @@ public class VirtualMachine {
             } else if (instr.instructName.equals("call")) {
                 String functionName = instr.argument;
                 if (functionName.equals("sin")) {
-                    if (stack.get(stack.size() - 1).type == RuntimeObject.ContentType.Float) {
+                    RuntimeObject arg = stack.get(stack.size() - 1);
+                    if (arg.type == RuntimeObject.ContentType.Float) {
                         RuntimeObject obj = new RuntimeObject();
                         obj.type = RuntimeObject.ContentType.Float;
-                        obj.FloatValue = (float) Math.sin(stack.get(stack
-                                .size() - 1).FloatValue);
+                        obj.FloatValue = (float) Math.sin(arg.FloatValue);
                         stack.remove(stack.size() - 1);
                         stack.add(obj);
                     } else {
                         throw new RuntimeException("type mismatch");
                     }
-                } else if (functionName.equals("print")) {
+                } else if(functionName.equals("size")){
+                    RuntimeObject arg = stack.get(stack.size() - 1);
+                    if (arg.type == RuntimeObject.ContentType.Array) {
+                        RuntimeObject obj = new RuntimeObject();
+                        obj.type = RuntimeObject.ContentType.Float;
+                        obj.FloatValue = (float) arg.ArrayValue.size();
+                        stack.set(stack.size() - 1,obj);
+                    } else {
+                        throw new RuntimeException("type mismatch");
+                    }
+                }else if (functionName.equals("print")) {
                     RuntimeObject argObj = stack.get(stack.size() - 1);
                     RuntimeObject obj = new RuntimeObject();
                     obj.type = RuntimeObject.ContentType.Float;

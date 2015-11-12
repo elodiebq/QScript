@@ -1,6 +1,6 @@
 x = [1,2,6,4,3];
-for(i=0 to 4) {
-   for (j=i+1 to 4){
+for(i=0 to size(x)-1) {
+   for (j=i+1 to size(x)-1){
       if(x[i] > x[j]) {
          tmp = x[j];
 	 x[j] = x[i];
